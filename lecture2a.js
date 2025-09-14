@@ -9,6 +9,7 @@ const elements = {
     regFlags: document.querySelector('#reg-flags p:last-child'),
     regSP: document.querySelector('#reg-sp p:last-child'), // Stack Pointer
     memoryGrid: document.getElementById('memory-grid'),
+    stackGrid: document.getElementById('stack-grid'),
     stepBtn: document.getElementById('step-btn'),
     resetBtn: document.getElementById('reset-btn'),
     scenarioSelect: document.getElementById('scenario-select'),
@@ -40,6 +41,7 @@ const elements = {
     builderModal: document.getElementById('builder-modal'),
     jsonEditorModal: document.getElementById('json-editor-modal'),
     ioDevicesContainer: document.getElementById('io-devices-container'),
+    stackPanel: document.getElementById('stack-panel'),
     ioDevices: {}, // To be populated dynamically
 };
 
@@ -389,6 +391,33 @@ function updateUI() {
     if (marCell) marCell.classList.add('highlight-mar');
 }
 
+function updateStackUI() {
+    if (!elements.stackGrid) return; 
+    elements.stackGrid.innerHTML = '';
+    const sp = cpu.sp;
+    const range = 4; // Words to show above/below SP
+
+    // Display memory from SP+range down to SP-range
+    for (let i = range; i >= -range; i--) {
+        const addr = sp + i;
+        if (addr >= 0 && addr < memory.length) {
+            const val = memory[addr] || 0;
+            const cell = document.createElement('div');
+            cell.id = `stack-${toHex(addr)}`;
+            let classNames = 'memory-cell bg-gray-200 p-2 rounded transition-all duration-300';
+            
+            // Highlight the cell pointed to by SP
+            if (addr === sp) {
+                classNames += ' bg-orange-200 border-2 border-orange-500';
+            }
+            
+            cell.className = classNames;
+            cell.innerHTML = `<span class="font-bold text-gray-500">${toHex(addr)}:</span> <span class="font-mono">${toHex(val)}</span>`;
+            elements.stackGrid.appendChild(cell);
+        }
+    }
+}
+
 function updateMemoryUI() {
     elements.memoryGrid.innerHTML = '';
     let displayAddresses = new Set();
@@ -431,6 +460,7 @@ function updateMemoryUI() {
         elements.memoryGrid.appendChild(cell);
     });
     updateUI();
+    updateStackUI(); // Update stack along with memory
 }
 
 function setExplanation(textKey, state = '', params = {}) {
@@ -514,6 +544,7 @@ function resetSimulation() {
 
     cycleState = 'START';
     updateMemoryUI();
+    updateStackUI();
     
     // Получаем начальное объяснение
     let initialExplanationKey = 'scenario-loaded';
@@ -546,6 +577,8 @@ function resetSimulation() {
         'reg-ioar': document.getElementById('reg-ioar'),
         'reg-iobr': document.getElementById('reg-iobr'),
         'reg-flags': document.getElementById('reg-flags'),
+        'reg-sp': document.getElementById('reg-sp'),
+        'stackPanel': elements.stackPanel
     };
 
     Object.values(allPanels).forEach(p => {
@@ -553,8 +586,13 @@ function resetSimulation() {
     });
     if (scenario.hide) {
         scenario.hide.forEach(id => {
-            const el = id.includes('.') ? elements[id.split('.')[0]][id.split('.')[1]] : document.getElementById(id);
+            const el = id.includes('.') ? elements[id.split('.')[0]][id.split('.')[1]] : allPanels[id];
             if(el) el.classList.add('hidden-scenario');
+
+            // If SP is hidden, also hide the stack panel
+            if (id === 'reg-sp') {
+                if(allPanels['stackPanel']) allPanels['stackPanel'].classList.add('hidden-scenario');
+            }
         });
     }
 
@@ -613,6 +651,7 @@ function tickDMA() {
         setExplanation('dma-complete', 'DMA COMPLETE');
     }
     updateMemoryUI();
+    updateStackUI();
 }
 
 function updateIoDeviceUI(deviceName){
@@ -735,6 +774,9 @@ async function simulationStep() {
                 // Update current interrupt priority
                 cpu.currentInterruptPriority = interrupt.priority;
 
+                updateMemoryUI();
+                updateStackUI();
+
                 highlightRegister('PC', true);
                 highlightRegister('AC', true);
                 highlightRegister('FLAGS', true);
@@ -760,6 +802,7 @@ async function simulationStep() {
                 
                 simulationStep.currentInterrupt = null;
                 updateUI();
+                updateStackUI();
                 cycleState = 'START';
                 break;
 
@@ -1108,6 +1151,7 @@ async function simulationStep() {
                 }
 
                 updateUI();
+                updateStackUI();
                 highlightRegister('PC', true);
                 highlightRegister('AC', true);
                 highlightRegister('FLAGS', true);

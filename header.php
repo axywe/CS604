@@ -135,7 +135,9 @@
         <nav class="bg-white p-4 rounded-xl shadow-lg mb-4">
             <div class="flex justify-between items-center">
                 <div class="flex space-x-4">
-                    <a href="index.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('simulator-title', $currentLang); ?></a>
+                    <a href="index.php" class="text-gray-700 hover:text-blue-800 font-semibold"><?php echo getTranslation('home', $currentLang); ?></a>
+                    <a href="lecture2a.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('lecture2a-title', $currentLang); ?></a>
+                    <a href="lecture2b.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('lecture2b-title', $currentLang); ?></a>
                 </div>
                 <div class="flex items-center space-x-2">
                     <button id="lang-en" class="lang-btn bg-blue-500 text-white font-bold py-2 px-4 rounded-l">EN</button>

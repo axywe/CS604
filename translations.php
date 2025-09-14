@@ -13,6 +13,7 @@ $translations = [
         'cycle-state' => 'Current State: {state}',
         'welcome-text' => 'Welcome! Select a scenario and press "Next Step" to begin the simulation.',
         'scenario-loaded' => 'Scenario "{scenarioName}" loaded. Press "Next Step" to begin.',
+        'stack-memory' => 'Stack Memory',
         
         // Scenario descriptions
         'scenario-von-neumann-init' => "🏗️ Von Neumann Architecture Demonstration\n\n📋 Learning objective: Understanding the fundamental principle where instructions and data share the same memory space\n\n🎯 Initial state:\n• PC = 0x100 (pointing to first instruction)\n• Memory contains program: LOAD → ADD → STORE → HALT\n• Data values: 42 and 25 stored at addresses 0x104 and 0x105\n• AC = 0 (accumulator empty)\n\n🔄 Execution process:\n1. CPU fetches instructions sequentially from 0x100-0x103\n2. For data operations, CPU accesses the same memory but different addresses (0x104-0x106)\n3. Demonstrates the stored program concept\n\n✅ Final state:\n• AC will contain 67 (42 + 25)\n• Memory location 0x106 will store the result\n• Program halts after 4 instruction cycles\n\n💡 Key concept: The CPU treats memory uniformly. The Program Counter determines whether to interpret memory contents as instructions or data.",
@@ -185,6 +186,99 @@ $translations = [
         'error-io-device-not-found' => 'I/O Error: Device with code {deviceCode} does not exist in the current scenario.',
         'error-io-device-busy' => 'I/O Error: Device "{deviceName}" is currently busy.',
         'error-dma-no-disk' => 'DMA Error: The "disk" device, required for this DMA operation, is not present in the current scenario.',
+        
+        'lecture2a-title' => 'Lecture 2a: CPU Simulation',
+        'lecture2b-title' => 'Lecture 2b: Interconnects',
+        'interconnection-structures' => 'Interconnection Structures',
+        'scenario-bus' => 'Scenario: Bus Architecture',
+        'scenario-point-to-point' => 'Scenario: Point-to-Point Interconnect',
+        'scenario-pcie-layers' => 'Scenario: PCIe Layered Protocol',
+        'welcome-text-lecture2b' => "Welcome to the Interconnects simulation. Select a scenario to visualize different data transfer methods between computer components.",
+
+        'bus-scenario-init' => "This scenario demonstrates a memory read operation using a shared system bus, which consists of separate lines for addresses, data, and control signals.",
+        'bus-step-0' => "<b>Step 1: Obtain Bus Control</b><br>The CPU needs to send data. First, it must request and be granted control of the shared system bus. Only one device can transmit at a time to avoid signal interference.",
+        'bus-step-1' => "<b>Step 2: Send Address</b><br>The CPU places the desired memory address (e.g., 0x1A4) onto the address lines of the bus. All devices on the bus see this address, but only the memory controller will recognize and respond to it.",
+        'bus-step-2' => "<b>Step 3: Send Control Signal</b><br>The CPU asserts the 'Memory Read' signal on the control lines. This command informs the memory module that it should retrieve the data from the specified address and place it on the bus.",
+        'bus-step-3' => "<b>Step 4: Memory Responds</b><br>The memory module places the requested data (e.g., 0xBEEF) onto the data lines of the bus.",
+        'bus-step-4' => "<b>Step 5: CPU Receives Data</b><br>The CPU reads the data from the data lines and copies it into one of its internal registers (like the MBR). The memory read operation is now complete.",
+
+        'ptp-scenario-init' => "This scenario illustrates a Point-to-Point (PTP) interconnect, like Intel's QPI. Instead of a shared bus, components have direct, dedicated links, allowing multiple simultaneous data transfers.",
+        'ptp-step-0' => "<b>Step 1: System View</b><br>The components are connected directly. CPU Core A has links to Core B and the I/O Hub. Core B and the I/O hub are connected to Memory. This forms a network or 'fabric'.",
+        'ptp-step-1' => "<b>Step 2: Core A to I/O Hub</b><br>Core A sends a data packet directly to the I/O Hub. This transfer does not interfere with any other component.",
+        'ptp-step-2' => "<b>Step 3: Core B to Memory</b><br>Simultaneously, Core B can access Main Memory through its own dedicated link. This parallelism is the key advantage over a shared bus, significantly improving performance.",
+        'ptp-step-3' => "<b>Step 4: Multiple Transfers</b><br>The simulation shows two independent data transfers occurring at the same time, which would be impossible with a single shared bus.",
+        
+        'pcie-scenario-init' => "This scenario shows how a data packet is constructed as it moves down the layers of the PCIe protocol stack. Each layer adds its own header and control information, encapsulating the data from the layer above.",
+        'pcie-step-0' => "<b>Step 1: Transaction Layer</b><br>The process begins when the software layer sends data. The Transaction Layer receives this data and adds a header, creating a Transaction Layer Packet (TLP). The header contains information like the destination address and transaction type (e.g., memory read/write).",
+        'pcie-step-1' => "<b>Step 2: Data Link Layer</b><br>The TLP is passed to the Data Link Layer. This layer adds a sequence number for tracking and an LCRC (Link CRC) for error detection. This ensures reliable delivery across a single link.",
+        'pcie-step-2' => "<b>Step 3: Physical Layer</b><br>The packet arrives at the Physical Layer, which adds framing bytes to mark the start and end of the packet. It then encodes the data (e.g., 128b/130b encoding) and sends it over the physical wires as a serial bitstream.",
+        'pcie-step-3' => "<b>Step 4: Transmission</b><br>The fully formed packet, with information from all three layers, is now ready for transmission across the physical PCIe link to its destination.",
+
+        // New scenarios for complete lecture 2b coverage
+        'scenario-bus-arbitration' => 'Scenario: Bus Arbitration',
+        'scenario-qpi-detailed' => 'Scenario: QPI Protocol Details',
+        'scenario-pcie-split-transactions' => 'Scenario: PCIe Split Transactions',
+        'scenario-pcie-encoding' => 'Scenario: PCIe 128b/130b Encoding',
+        'scenario-pcie-multilane' => 'Scenario: PCIe Multi-Lane',
+        'scenario-pcie-ack-nak' => 'Scenario: PCIe ACK/NAK Mechanism',
+
+        // Bus Arbitration
+        'bus-arbitration-init' => "This scenario demonstrates bus arbitration when multiple masters (CPU, DMA, I/O) compete for access to the shared system bus. The bus arbitrator resolves conflicts using priority-based allocation.",
+        'bus-arb-step-0' => "<b>Step 1: Simultaneous Requests</b><br>Multiple devices request bus access simultaneously. CPU, DMA Controller, and I/O Device all assert their Bus Request (BREQ) signals. The arbitrator must decide who gets priority.",
+        'bus-arb-step-1' => "<b>Step 2: Priority Resolution</b><br>The bus arbitrator grants access to the highest priority device (usually CPU). It asserts Bus Grant (BGRANT) signal to the CPU while other requests remain pending.",
+        'bus-arb-step-2' => "<b>Step 3: CPU Transfer</b><br>CPU performs its memory access operation using the granted bus. During this time, no other device can use the bus, ensuring data integrity.",
+        'bus-arb-step-3' => "<b>Step 4: CPU Release</b><br>CPU completes its transfer and releases its Bus Request. The bus is now free, and the arbitrator checks for other pending requests.",
+        'bus-arb-step-4' => "<b>Step 5: Grant to DMA</b><br>The arbitrator sees the pending DMA request and grants bus access to the DMA Controller as it has the next highest priority.",
+        'bus-arb-step-5' => "<b>Step 6: DMA Transfer</b><br>DMA Controller performs its memory transfer. This demonstrates how DMA can access memory directly without CPU intervention.",
+        'bus-arb-step-6' => "<b>Step 7: DMA Release</b><br>After its transfer, the DMA controller releases the bus. The arbitrator now sees the pending I/O request.",
+        'bus-arb-step-7' => "<b>Step 8: Grant to I/O</b><br>Finally, the I/O device is granted bus access and can begin its operation.",
+        'bus-arb-step-8' => "<b>Step 9: I/O Transfer</b><br>The I/O device completes its memory operation, demonstrating device-to-memory communication.",
+        'bus-arb-step-9' => "<b>Step 10: Arbitration Complete</b><br>All pending requests have been serviced. The bus returns to an idle state, ready for new requests. Notice how arbitration prevents bus conflicts.",
+
+        // QPI Details
+        'qpi-detailed-init' => "This scenario shows Intel QPI (QuickPath Interconnect) protocol details including phit/flit assembly, credit-based flow control, and error recovery mechanisms.",
+        'qpi-step-0' => "<b>Step 1: Credit Check</b><br>Before sending data, Core A checks its credit count. QPI uses credit-based flow control to prevent buffer overflow at the receiver.",
+        'qpi-step-1' => "<b>Step 2: Phit to Flit Assembly</b><br>Data is transmitted as 20-bit phits (physical units) that are assembled into 80-bit flits (flow control units). Four phits make one complete flit.",
+        'qpi-step-2' => "<b>Step 3: Flit Transmission</b><br>The complete 80-bit flit is transmitted over the QPI link using 20 parallel data lanes plus clock lanes for synchronization.",
+        'qpi-step-3' => "<b>Step 4: Credit Return</b><br>Core B processes the flit and returns a credit to Core A, indicating buffer space is available for the next transmission.",
+        'qpi-step-4' => "<b>Step 5: Error Detection & Recovery</b><br>QPI includes CRC error detection. When an error is detected, the sender retransmits the corrupted flit, ensuring reliable communication.",
+        'qpi-step-5' => "<b>Step 6: Protocol Complete</b><br>The QPI protocol ensures reliable, high-speed communication between cores using credits, error detection, and automatic retransmission.",
+
+        // PCIe Split Transactions
+        'pcie-split-init' => "This scenario demonstrates PCIe split transactions where requests and completions are separated in time, allowing the CPU to continue other work while waiting for responses.",
+        'pcie-split-step-0' => "<b>Step 1: Request Initiation</b><br>CPU sends a Memory Read Request TLP to a PCIe endpoint. The request includes a unique tag for matching with the eventual completion.",
+        'pcie-split-step-1' => "<b>Step 2: Request Transmission</b><br>The request TLP travels through the PCIe fabric to the target endpoint device, which will process the memory read operation.",
+        'pcie-split-step-2' => "<b>Step 3: CPU Continues</b><br>Unlike synchronous operations, the CPU doesn't wait idle. It continues executing other instructions while the endpoint processes the request.",
+        'pcie-split-step-3' => "<b>Step 4: Completion Preparation</b><br>The endpoint completes the memory read and prepares a Completion TLP containing the requested data and matching tag.",
+        'pcie-split-step-4' => "<b>Step 5: Completion Transmission</b><br>The Completion TLP travels back to the CPU, carrying the requested data and the original tag for proper routing.",
+        'pcie-split-step-5' => "<b>Step 6: Transaction Complete</b><br>CPU receives the completion and matches it with the original request using the tag. This split transaction model improves overall system efficiency.",
+
+        // PCIe Encoding
+        'pcie-encoding-init' => "This scenario demonstrates PCIe's 128b/130b encoding scheme and scrambling techniques used to ensure reliable high-speed serial transmission.",
+        'pcie-enc-step-0' => "<b>Step 1: Raw Data</b><br>Starting with 128 bits of raw data that needs to be transmitted over the PCIe link.",
+        'pcie-enc-step-1' => "<b>Step 2: Scrambling</b><br>Data is scrambled to improve transition density and spectral properties, helping with clock recovery at the receiver.",
+        'pcie-enc-step-2' => "<b>Step 3: 128b/130b Encoding</b><br>The 128-bit data block is encoded into a 130-bit block by adding a 2-bit sync header (10 for data blocks). This adds 1.54% overhead but improves signal quality.",
+        'pcie-enc-step-3' => "<b>Step 4: Serial Transmission</b><br>The 130-bit encoded blocks are transmitted serially over differential pairs, with framing sequences marking packet boundaries.",
+        'pcie-enc-step-4' => "<b>Step 5: Encoding Complete</b><br>The encoding process balances efficiency (98.46%) with signal integrity, enabling reliable high-speed communication.",
+
+        // PCIe Multi-Lane
+        'pcie-multilane-init' => "This scenario shows how PCIe distributes data across multiple lanes using round-robin distribution to achieve higher aggregate bandwidth.",
+        'pcie-multi-step-0' => "<b>Step 1: Data Distribution</b><br>Source data is divided byte-by-byte for distribution across multiple parallel lanes in a round-robin fashion.",
+        'pcie-multi-step-1' => "<b>Step 2: Lane Assignment</b><br>Each byte is assigned to a specific lane in sequence. PCIe x4 uses 4 differential pairs, allowing 4 bytes to be transmitted simultaneously.",
+        'pcie-multi-step-2' => "<b>Step 3: Parallel Transmission</b><br>All lanes transmit simultaneously, with the receiver reconstructing the original data stream from the parallel inputs.",
+        'pcie-multi-step-3' => "<b>Step 4: Throughput Calculation</b><br>PCIe x4 at 8 GT/s provides 31.4 GT/s effective bandwidth after 128b/130b encoding overhead, resulting in ~3.9 GB/s aggregate throughput.",
+
+        // PCIe ACK/NAK
+        'pcie-ack-nak-init' => "This scenario demonstrates PCIe's Data Link Layer ACK/NAK mechanism for reliable packet delivery, including error detection and automatic retransmission.",
+        'pcie-ack-step-0' => "<b>Step 1: Setup</b><br>The transmitter prepares TLPs for transmission. Each TLP is stored in a retransmission buffer and assigned a sequence number for tracking.",
+        'pcie-ack-step-1' => "<b>Step 2: Successful Transmission</b><br>TLP #1 is transmitted successfully to the receiver. The Data Link Layer adds sequence number and LCRC for error detection.",
+        'pcie-ack-step-2' => "<b>Step 3: ACK Response</b><br>The receiver validates the LCRC, finds no errors, and sends an ACK DLLP back to the transmitter. The transmitter can now remove TLP #1 from its retransmission buffer.",
+        'pcie-ack-step-3' => "<b>Step 4: Error Injection</b><br>TLP #2 is corrupted during transmission (simulated error). The receiver detects the LCRC mismatch, indicating data corruption.",
+        'pcie-ack-step-4' => "<b>Step 5: NAK Response</b><br>The receiver sends a NAK DLLP for sequence #2, indicating the packet was corrupted and needs retransmission.",
+        'pcie-ack-step-5' => "<b>Step 6: Retransmission</b><br>Upon receiving NAK, the transmitter retransmits TLP #2 and all subsequent packets (TLP #3) to maintain ordering. This is the 'Go-Back-N' protocol.",
+        'pcie-ack-step-6' => "<b>Step 7: Recovery Complete</b><br>Both retransmitted TLPs are received successfully and ACK'd. The link has recovered from the error transparently to higher layers.",
+        'home' => 'Home',
+        'lecture-selection' => 'Select a Lecture to Begin'
     ],
     
     'ru' => [
@@ -199,7 +293,8 @@ $translations = [
         'cycle-state' => 'Текущее Состояние: {state}',
         'welcome-text' => 'Добро пожаловать! Выберите сценарий и нажмите "Следующий шаг", чтобы начать симуляцию.',
         'scenario-loaded' => 'Сценарий "{scenarioName}" загружен. Нажмите "Следующий шаг", чтобы начать.',
-        
+        'stack-memory' => 'Stack Memory',
+
         // Scenario descriptions
         'scenario-von-neumann-init' => "🏗️ Демонстрация архитектуры Фон Неймана\n\n📋 Цель обучения: Понимание фундаментального принципа совместного хранения инструкций и данных в одном пространстве памяти\n\n🎯 Начальное состояние:\n• PC = 0x100 (указывает на первую инструкцию)\n• Память содержит программу: LOAD → ADD → STORE → HALT\n• Значения данных: 42 и 25 хранятся по адресам 0x104 и 0x105\n• AC = 0 (аккумулятор пуст)\n\n🔄 Процесс выполнения:\n1. ЦПУ последовательно извлекает инструкции из 0x100-0x103\n2. Для операций с данными ЦПУ обращается к той же памяти, но по разным адресам (0x104-0x106)\n3. Демонстрирует концепцию хранимой программы\n\n✅ Конечное состояние:\n• AC будет содержать 67 (42 + 25)\n• Ячейка памяти 0x106 сохранит результат\n• Программа остановится после 4 циклов инструкций\n\n💡 Ключевая концепция: ЦПУ обращается с памятью единообразно. Счетчик команд определяет, интерпретировать ли содержимое памяти как инструкции или данные.",
         
@@ -371,6 +466,99 @@ $translations = [
         'error-io-device-not-found' => 'Ошибка В/В: Устройство с кодом {deviceCode} не существует в текущем сценарии.',
         'error-io-device-busy' => 'Ошибка В/В: Устройство "{deviceName}" в данный момент занято.',
         'error-dma-no-disk' => 'Ошибка DMA: Устройство "disk", необходимое для этой операции DMA, отсутствует в текущем сценарии.',
+        
+        'lecture2a-title' => 'Лекция 2a: Симуляция ЦПУ',
+        'lecture2b-title' => 'Лекция 2b: Межсоединения',
+        'interconnection-structures' => 'Структуры межсоединений',
+        'scenario-bus' => 'Сценарий: Шинная архитектура',
+        'scenario-point-to-point' => 'Сценарий: Точка-точка',
+        'scenario-pcie-layers' => 'Сценарий: Уровни протокола PCIe',
+        'welcome-text-lecture2b' => "Добро пожаловать в симуляцию межсоединений. Выберите сценарий для визуализации различных методов передачи данных между компонентами компьютера.",
+        
+        'bus-scenario-init' => "Этот сценарий демонстрирует операцию чтения из памяти с использованием общей системной шины, которая состоит из отдельных линий для адресов, данных и управляющих сигналов.",
+        'bus-step-0' => "<b>Шаг 1: Получение контроля над шиной</b><br>ЦПУ необходимо отправить данные. Сначала он должен запросить и получить контроль над общей системной шиной. Только одно устройство может передавать данные в один момент времени, чтобы избежать интерференции сигналов.",
+        'bus-step-1' => "<b>Шаг 2: Отправка адреса</b><br>ЦПУ помещает требуемый адрес памяти (например, 0x1A4) на адресные линии шины. Все устройства на шине видят этот адрес, но только контроллер памяти распознает и ответит на него.",
+        'bus-step-2' => "<b>Шаг 3: Отправка управляющего сигнала</b><br>ЦПУ выставляет сигнал 'Чтение памяти' на линиях управления. Эта команда информирует модуль памяти, что он должен извлечь данные по указанному адресу и поместить их на шину.",
+        'bus-step-3' => "<b>Шаг 4: Ответ памяти</b><br>Модуль памяти помещает запрошенные данные (например, 0xBEEF) на линии данных шины.",
+        'bus-step-4' => "<b>Шаг 5: ЦПУ получает данные</b><br>ЦПУ считывает данные с линий данных и копирует их в один из своих внутренних регистров (например, MBR). Операция чтения из памяти завершена.",
+
+        'ptp-scenario-init' => "Этот сценарий иллюстрирует межсоединение Точка-Точка (PTP), такое как Intel QPI. Вместо общей шины компоненты имеют прямые, выделенные каналы, что позволяет осуществлять несколько одновременных передач данных.",
+        'ptp-step-0' => "<b>Шаг 1: Обзор системы</b><br>Компоненты соединены напрямую. Ядро ЦПУ A имеет соединения с Ядром B и Концентратором В/В. Ядро B и Концентратор В/В соединены с Памятью. Это образует сеть или 'фабрику'.",
+        'ptp-step-1' => "<b>Шаг 2: Ядро A к Концентратору В/В</b><br>Ядро A отправляет пакет данных напрямую в Концентратор В/В. Эта передача не мешает никакому другому компоненту.",
+        'ptp-step-2' => "<b>Шаг 3: Ядро B к Памяти</b><br>Одновременно Ядро B может обращаться к Основной Памяти через свое собственное выделенное соединение. Этот параллелизм является ключевым преимуществом перед общей шиной, значительно повышая производительность.",
+        'ptp-step-3' => "<b>Шаг 4: Множественные передачи</b><br>Симуляция показывает две независимые передачи данных, происходящие одновременно, что было бы невозможно с одной общей шиной.",
+        
+        'pcie-scenario-init' => "Этот сценарий показывает, как конструируется пакет данных по мере его продвижения вниз по уровням стека протокола PCIe. Каждый уровень добавляет свой собственный заголовок и управляющую информацию, инкапсулируя данные с вышележащего уровня.",
+        'pcie-step-0' => "<b>Шаг 1: Транзакционный уровень</b><br>Процесс начинается, когда программный уровень отправляет данные. Транзакционный уровень получает эти данные и добавляет заголовок, создавая пакет транзакционного уровня (TLP). Заголовок содержит информацию, такую как адрес назначения и тип транзакции (например, чтение/запись в память).",
+        'pcie-step-1' => "<b>Шаг 2: Канальный уровень</b><br>TLP передается на канальный уровень. Этот уровень добавляет порядковый номер для отслеживания и LCRC (Link CRC) для обнаружения ошибок. Это обеспечивает надежную доставку по одному каналу.",
+        'pcie-step-2' => "<b>Шаг 3: Физический уровень</b><br>Пакет поступает на физический уровень, который добавляет байты кадрирования для обозначения начала и конца пакета. Затем он кодирует данные (например, кодирование 128b/130b) и отправляет их по физическим проводам в виде последовательного потока битов.",
+        'pcie-step-3' => "<b>Шаг 4: Передача</b><br>Полностью сформированный пакет с информацией со всех трех уровней теперь готов к передаче по физическому каналу PCIe к месту назначения.",
+
+        // Новые сценарии для полного покрытия лекции 2b
+        'scenario-bus-arbitration' => 'Сценарий: Арбитраж шины',
+        'scenario-qpi-detailed' => 'Сценарий: Детали протокола QPI',
+        'scenario-pcie-split-transactions' => 'Сценарий: Разделенные транзакции PCIe',
+        'scenario-pcie-encoding' => 'Сценарий: Кодирование PCIe 128b/130b',
+        'scenario-pcie-multilane' => 'Сценарий: Многолинейный PCIe',
+        'scenario-pcie-ack-nak' => 'Сценарий: Механизм ACK/NAK PCIe',
+
+        // Арбитраж шины
+        'bus-arbitration-init' => "Этот сценарий демонстрирует арбитраж шины, когда несколько мастеров (ЦПУ, DMA, В/В) конкурируют за доступ к общей системной шине. Арбитратор шины разрешает конфликты, используя приоритетное распределение.",
+        'bus-arb-step-0' => "<b>Шаг 1: Одновременные запросы</b><br>Несколько устройств одновременно запрашивают доступ к шине. ЦПУ, контроллер DMA и устройство В/В активируют свои сигналы запроса шины (BREQ). Арбитратор должен решить, кому отдать приоритет.",
+        'bus-arb-step-1' => "<b>Шаг 2: Разрешение приоритета</b><br>Арбитратор шины предоставляет доступ устройству с наивысшим приоритетом (обычно ЦПУ). Он активирует сигнал предоставления шины (BGRANT) для ЦПУ, в то время как другие запросы остаются в ожидании.",
+        'bus-arb-step-2' => "<b>Шаг 3: Передача ЦПУ</b><br>ЦПУ выполняет свою операцию доступа к памяти, используя предоставленную шину. В это время никакое другое устройство не может использовать шину, обеспечивая целостность данных.",
+        'bus-arb-step-3' => "<b>Шаг 4: Освобождение ЦПУ</b><br>ЦПУ завершает свою передачу и снимает запрос на использование шины. Шина теперь свободна, и арбитр проверяет наличие других ожидающих запросов.",
+        'bus-arb-step-4' => "<b>Шаг 5: Предоставление DMA</b><br>Арбитр видит ожидающий запрос от DMA и предоставляет доступ к шине контроллеру DMA, так как у него следующий по величине приоритет.",
+        'bus-arb-step-5' => "<b>Шаг 6: Передача DMA</b><br>Контроллер DMA выполняет свою передачу в память. Это демонстрирует, как DMA может обращаться к памяти напрямую без вмешательства ЦПУ.",
+        'bus-arb-step-6' => "<b>Шаг 7: Освобождение DMA</b><br>После своей передачи контроллер DMA освобождает шину. Теперь арбитр видит ожидающий запрос от устройства В/В.",
+        'bus-arb-step-7' => "<b>Шаг 8: Предоставление В/В</b><br>Наконец, устройство В/В получает доступ к шине и может начать свою операцию.",
+        'bus-arb-step-8' => "<b>Шаг 9: Передача В/В</b><br>Устройство В/В завершает свою операцию с памятью, демонстрируя связь устройство-память.",
+        'bus-arb-step-9' => "<b>Шаг 10: Арбитраж завершен</b><br>Все ожидающие запросы обслужены. Шина возвращается в состояние ожидания, готовая к новым запросам. Обратите внимание, как арбитраж предотвращает конфликты шины.",
+
+        // Детали QPI
+        'qpi-detailed-init' => "Этот сценарий показывает детали протокола Intel QPI (QuickPath Interconnect), включая сборку phit/flit, управление потоком на основе кредитов и механизмы восстановления после ошибок.",
+        'qpi-step-0' => "<b>Шаг 1: Проверка кредитов</b><br>Перед отправкой данных Ядро A проверяет свой счет кредитов. QPI использует управление потоком на основе кредитов для предотвращения переполнения буфера у получателя.",
+        'qpi-step-1' => "<b>Шаг 2: Сборка Phit в Flit</b><br>Данные передаются как 20-битные phit (физические единицы), которые собираются в 80-битные flit (единицы управления потоком). Четыре phit составляют один полный flit.",
+        'qpi-step-2' => "<b>Шаг 3: Передача Flit</b><br>Полный 80-битный flit передается по каналу QPI, используя 20 параллельных линий данных плюс тактовые линии для синхронизации.",
+        'qpi-step-3' => "<b>Шаг 4: Возврат кредита</b><br>Ядро B обрабатывает flit и возвращает кредит Ядру A, указывая, что буферное пространство доступно для следующей передачи.",
+        'qpi-step-4' => "<b>Шаг 5: Обнаружение ошибок и восстановление</b><br>QPI включает обнаружение ошибок CRC. При обнаружении ошибки отправитель повторно передает поврежденный flit, обеспечивая надежную связь.",
+        'qpi-step-5' => "<b>Шаг 6: Протокол завершен</b><br>Протокол QPI обеспечивает надежную высокоскоростную связь между ядрами, используя кредиты, обнаружение ошибок и автоматическую повторную передачу.",
+
+        // Разделенные транзакции PCIe
+        'pcie-split-init' => "Этот сценарий демонстрирует разделенные транзакции PCIe, где запросы и завершения разделены во времени, позволяя ЦПУ продолжать другую работу в ожидании ответов.",
+        'pcie-split-step-0' => "<b>Шаг 1: Инициация запроса</b><br>ЦПУ отправляет TLP запроса чтения памяти на конечную точку PCIe. Запрос включает уникальный тег для сопоставления с возможным завершением.",
+        'pcie-split-step-1' => "<b>Шаг 2: Передача запроса</b><br>TLP запроса проходит через фабрику PCIe к целевому конечному устройству, которое обработает операцию чтения памяти.",
+        'pcie-split-step-2' => "<b>Шаг 3: ЦПУ продолжает</b><br>В отличие от синхронных операций, ЦПУ не ждет в простое. Он продолжает выполнять другие инструкции, пока конечная точка обрабатывает запрос.",
+        'pcie-split-step-3' => "<b>Шаг 4: Подготовка завершения</b><br>Конечная точка завершает чтение памяти и готовит TLP завершения, содержащий запрошенные данные и соответствующий тег.",
+        'pcie-split-step-4' => "<b>Шаг 5: Передача завершения</b><br>TLP завершения возвращается к ЦПУ, неся запрошенные данные и исходный тег для правильной маршрутизации.",
+        'pcie-split-step-5' => "<b>Шаг 6: Транзакция завершена</b><br>ЦПУ получает завершение и сопоставляет его с исходным запросом, используя тег. Эта модель разделенных транзакций повышает общую эффективность системы.",
+
+        // Кодирование PCIe
+        'pcie-encoding-init' => "Этот сценарий демонстрирует схему кодирования PCIe 128b/130b и методы скремблирования, используемые для обеспечения надежной высокоскоростной последовательной передачи.",
+        'pcie-enc-step-0' => "<b>Шаг 1: Исходные данные</b><br>Начинаем со 128 бит исходных данных, которые необходимо передать по каналу PCIe.",
+        'pcie-enc-step-1' => "<b>Шаг 2: Скремблирование</b><br>Данные скремблируются для улучшения плотности переходов и спектральных свойств, помогая с восстановлением тактовой частоты у получателя.",
+        'pcie-enc-step-2' => "<b>Шаг 3: Кодирование 128b/130b</b><br>128-битный блок данных кодируется в 130-битный блок добавлением 2-битного заголовка синхронизации (10 для блоков данных). Это добавляет 1,54% накладных расходов, но улучшает качество сигнала.",
+        'pcie-enc-step-3' => "<b>Шаг 4: Последовательная передача</b><br>130-битные кодированные блоки передаются последовательно по дифференциальным парам с последовательностями кадрирования, отмечающими границы пакетов.",
+        'pcie-enc-step-4' => "<b>Шаг 5: Кодирование завершено</b><br>Процесс кодирования балансирует эффективность (98,46%) с целостностью сигнала, обеспечивая надежную высокоскоростную связь.",
+
+        // Многолинейный PCIe
+        'pcie-multilane-init' => "Этот сценарий показывает, как PCIe распределяет данные по нескольким линиям, используя циклическое распределение для достижения более высокой совокупной пропускной способности.",
+        'pcie-multi-step-0' => "<b>Шаг 1: Распределение данных</b><br>Исходные данные делятся побайтно для распределения по нескольким параллельным линиям циклическим способом.",
+        'pcie-multi-step-1' => "<b>Шаг 2: Назначение линий</b><br>Каждый байт назначается определенной линии последовательно. PCIe x4 использует 4 дифференциальные пары, позволяя передавать 4 байта одновременно.",
+        'pcie-multi-step-2' => "<b>Шаг 3: Параллельная передача</b><br>Все линии передают одновременно, при этом получатель восстанавливает исходный поток данных из параллельных входов.",
+        'pcie-multi-step-3' => "<b>Шаг 4: Расчет пропускной способности</b><br>PCIe x4 на 8 ГТ/с обеспечивает 31,4 ГТ/с эффективной пропускной способности после накладных расходов кодирования 128b/130b, что дает ~3,9 ГБ/с совокупной пропускной способности.",
+
+        // ACK/NAK PCIe
+        'pcie-ack-nak-init' => "Этот сценарий демонстрирует механизм ACK/NAK канального уровня PCIe для надежной доставки пакетов, включая обнаружение ошибок и автоматическую повторную передачу.",
+        'pcie-ack-step-0' => "<b>Шаг 1: Настройка</b><br>Передатчик готовит TLP для передачи. Каждый TLP сохраняется в буфере повторной передачи и получает порядковый номер для отслеживания.",
+        'pcie-ack-step-1' => "<b>Шаг 2: Успешная передача</b><br>TLP #1 успешно передается получателю. Канальный уровень добавляет порядковый номер и LCRC для обнаружения ошибок.",
+        'pcie-ack-step-2' => "<b>Шаг 3: Ответ ACK</b><br>Получатель проверяет LCRC, не находит ошибок и отправляет ACK DLLP обратно передатчику. Передатчик теперь может удалить TLP #1 из буфера повторной передачи.",
+        'pcie-ack-step-3' => "<b>Шаг 4: Внесение ошибки</b><br>TLP #2 повреждается во время передачи (симулированная ошибка). Получатель обнаруживает несоответствие LCRC, указывающее на повреждение данных.",
+        'pcie-ack-step-4' => "<b>Шаг 5: Ответ NAK</b><br>Получатель отправляет NAK DLLP для последовательности #2, указывая, что пакет был поврежден и требует повторной передачи.",
+        'pcie-ack-step-5' => "<b>Шаг 6: Повторная передача</b><br>Получив NAK, передатчик повторно передает TLP #2 и все последующие пакеты (TLP #3) для сохранения порядка. Это протокол 'Go-Back-N'.",
+        'pcie-ack-step-6' => "<b>Шаг 7: Восстановление завершено</b><br>Оба повторно переданных TLP получены успешно и подтверждены ACK. Канал восстановился от ошибки прозрачно для верхних уровней.",
+        'home' => 'Главная',
+        'lecture-selection' => 'Выберите лекцию, чтобы начать'
     ]
 ];
 
