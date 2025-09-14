@@ -1,7 +1,3 @@
-// CPU Instruction Cycle Simulator - Enhanced JavaScript
-// Исправлены методические упрощения и техническая ошибка
-
-// DOM Elements
 const elements = {
     regPC: document.querySelector('#reg-pc p:last-child'),
     regIR: document.querySelector('#reg-ir p:last-child'),
@@ -41,6 +37,20 @@ const elements = {
     },
     ioPanel: document.getElementById('io-device-panel'),
     busContainer: document.getElementById('bus-container'),
+    builderModal: document.getElementById('builder-modal'),
+    jsonEditorModal: document.getElementById('json-editor-modal'),
+    ioDevicesContainer: document.getElementById('io-devices-container'),
+    ioDevices: {}, // To be populated dynamically
+};
+
+let customScenario = {
+    name: "Custom Scenario",
+    pc_start: 0x100,
+    memory: {},
+    interrupts: true,
+    hide: [],
+    ioDevices: {},
+    explanation: ""
 };
 
 // currentLang будет передан из PHP
@@ -68,11 +78,14 @@ let cycleState = 'START';
 let currentScenario = 'vonNeumann';
 let pendingInterrupts = [];
 
-let ioOperations = {
+const DEFAULT_IO_OPERATIONS = {
     printer: { active: false, progress: 0, duration: 20, priority: 2, isr: 0x050, isrState: 'idle' },
     disk: { active: false, progress: 0, duration: 20, priority: 4, isr: 0x060, isrState: 'idle' },
     network: { active: false, progress: 0, duration: 20, priority: 5, isr: 0x070, isrState: 'idle' },
 };
+
+let ioOperations = JSON.parse(JSON.stringify(DEFAULT_IO_OPERATIONS));
+
 
 // Расширенные сценарии с новыми возможностями
 const scenarios = {
@@ -86,8 +99,8 @@ const scenarios = {
             0x102: 0x2106, // STORE result to 0x106
             0x103: 0x0000, // HALT
             // Data
-            0x104: 0x002A, // 42
-            0x105: 0x0019, // 25
+            0x104: 0x0042, // 42
+            0x105: 0x0025, // 25
             0x106: 0x0000, // result placeholder
         },
         interrupts: false,
@@ -454,6 +467,23 @@ function getTranslation(key, lang = 'en', params = {}) {
 function resetSimulation() {
     removeAllHighlights();
     const scenario = scenarios[currentScenario];
+
+    // Handle custom scenarios' I/O devices
+    if (scenario.ioDevices) { // If the property exists, even if it's an empty object
+        ioOperations = JSON.parse(JSON.stringify(scenario.ioDevices)); // Deep copy
+    } else {
+        // Reset to default for built-in scenarios that don't have the ioDevices property
+        ioOperations = JSON.parse(JSON.stringify(DEFAULT_IO_OPERATIONS));
+    }
+    
+    // Dynamically create I/O device UI
+    elements.ioDevicesContainer.innerHTML = '';
+    elements.ioDevices = {}; // Reset references
+    for (const deviceName in ioOperations) {
+        createIoDeviceElement(deviceName, ioOperations[deviceName].priority);
+    }
+
+
     cpu = {
         pc: scenario.pc_start,
         ir: 0, mar: 0, mbr: 0, ac: 0, ioar: 0, iobr: 0,
@@ -477,7 +507,9 @@ function resetSimulation() {
         ioOperations[device].progress = 0;
         ioOperations[device].isrState = 'idle';
         updateIoDeviceUI(device);
-        elements[device].device.classList.remove('interrupting');
+        if (elements.ioDevices[device]) {
+             elements.ioDevices[device].device.classList.remove('interrupting');
+        }
     }
 
     cycleState = 'START';
@@ -526,9 +558,11 @@ function resetSimulation() {
         });
     }
 
-    // Специальное правило для отображения панели DMA в соответствующем сценарии
-    if (currentScenario === 'dma' && elements.dma.panel) {
+    // Special rule for DMA panel based on hide array
+    if (scenario.hide && !scenario.hide.includes('dma.panel')) {
         elements.dma.panel.classList.remove('hidden');
+    } else {
+        elements.dma.panel.classList.add('hidden');
     }
 }
 
@@ -543,10 +577,15 @@ function tickIO() {
                 device.progress = 0;
                 if(cpu.interruptsEnabled && !cpu.interruptMask) {
                    pendingInterrupts.push({ name: deviceName, priority: device.priority, isr: device.isr });
-                   elements[deviceName].device.classList.add('interrupting');
+                   if (elements.ioDevices[deviceName]) {
+                        elements.ioDevices[deviceName].device.classList.add('interrupting');
+                   }
                    setExplanation('io-complete-interrupt', 'INTERRUPT PENDING', { deviceName: deviceName });
                 } else {
-                   document.getElementById(`${deviceName}-status`).textContent = getTranslation('status-waiting', currentLang);
+                   const deviceStatusEl = document.getElementById(`${deviceName.toLowerCase()}-status`);
+                   if(deviceStatusEl) {
+                        deviceStatusEl.textContent = getTranslation('status-waiting', currentLang);
+                   }
                 }
                 updateIoDeviceUI(deviceName);
             }
@@ -578,9 +617,11 @@ function tickDMA() {
 
 function updateIoDeviceUI(deviceName){
     const device = ioOperations[deviceName];
-    const ui = elements[deviceName];
+    const ui = elements.ioDevices[deviceName];
+    if (!ui) return; 
+
     const pendingInterrupt = pendingInterrupts.find(p => p.name === deviceName);
-    const statusEl = document.getElementById(`${deviceName}-status`);
+    const statusEl = ui.status;
 
     ui.device.classList.remove('waiting', 'interrupting');
 
@@ -711,8 +752,8 @@ async function simulationStep() {
                 if (ioOperations[int_jump.name]) {
                     ioOperations[int_jump.name].isrState = 'running';
                 
-                    if (elements[int_jump.name]) {
-                        elements[int_jump.name].device.classList.remove('interrupting');
+                    if (elements.ioDevices[int_jump.name]) {
+                        elements.ioDevices[int_jump.name].device.classList.remove('interrupting');
                         updateIoDeviceUI(int_jump.name);
                     }
                 }
@@ -977,15 +1018,19 @@ async function simulationStep() {
                 else if(deviceAddr === 2) deviceName = 'disk';
                 else if(deviceAddr === 3) deviceName = 'network';
 
-                if(deviceName && !ioOperations[deviceName].active) {
+                if (!deviceName || !ioOperations[deviceName]) {
+                    setExplanation('error-io-device-not-found', "I/O ERROR", { deviceCode: deviceAddr });
+                    cpu.isHalted = true;
+                } else if (ioOperations[deviceName].active) {
+                    setExplanation('error-io-device-busy', "I/O ERROR", { deviceName: deviceName });
+                    cpu.isHalted = true;
+                } else {
                     ioOperations[deviceName].active = true;
                     ioOperations[deviceName].progress = 0;
-                    await showBusTransfer('reg-ioar', deviceName, `CMD: START`, 'control');
-                    await showBusTransfer('reg-iobr', deviceName, `DATA: ${toHex(cpu.iobr)}`, 'data');
+                    await showBusTransfer('reg-ioar', deviceName.toLowerCase(), `CMD: START`, 'control');
+                    await showBusTransfer('reg-iobr', deviceName.toLowerCase(), `DATA: ${toHex(cpu.iobr)}`, 'data');
                     updateIoDeviceUI(deviceName);
                     setExplanation("start-io", "Data Operation");
-                } else {
-                    setExplanation("start-io-fail", "Data Operation");
                 }
                 cycleState = 'START';
                 break;
@@ -993,36 +1038,41 @@ async function simulationStep() {
             case 'EXECUTE_IO_1':
                 const addressPart = cpu.ir & 0x0FFF;
                 const ioCommand = (cpu.ir & 0x0F00) >> 8;
-                const deviceCode = addressPart & 0x000F;
 
                 if (ioCommand === 0) { // Standard I/O
-                    let deviceName = '';
-                    if(deviceCode === 1) deviceName = 'printer';
-                    else if(deviceCode === 2) deviceName = 'disk';
-                    else if(deviceCode === 3) deviceName = 'network';
+                    const deviceCode = addressPart & 0x000F;
+                    let deviceNameIo = '';
+                    if(deviceCode === 1) deviceNameIo = 'printer';
+                    else if(deviceCode === 2) deviceNameIo = 'disk';
+                    else if(deviceCode === 3) deviceNameIo = 'network';
                     
-                    // ИСПРАВЛЕНИЕ ТЕХНИЧЕСКОЙ ОШИБКИ: используем deviceName вместо devName
-                    if(deviceName && !ioOperations[deviceName].active) {
-                        ioOperations[deviceName].active = true;
-                        ioOperations[deviceName].progress = 0;
-                        await showBusTransfer('reg-ir', deviceName, `CMD: START`, 'control');
-                        updateIoDeviceUI(deviceName);
-                        setExplanation("io-write", "Data Operation", { deviceName: deviceName });
+                    if (!deviceNameIo || !ioOperations[deviceNameIo]) {
+                        setExplanation('error-io-device-not-found', "I/O ERROR", { deviceCode: deviceCode });
+                        cpu.isHalted = true;
+                    } else if (ioOperations[deviceNameIo].active) {
+                        setExplanation('error-io-device-busy', "I/O ERROR", { deviceName: deviceNameIo });
+                        cpu.isHalted = true;
                     } else {
-                        setExplanation("io-write-fail", "Data Operation");
+                        ioOperations[deviceNameIo].active = true;
+                        ioOperations[deviceNameIo].progress = 0;
+                        await showBusTransfer('reg-ir', deviceNameIo.toLowerCase(), `CMD: START`, 'control');
+                        updateIoDeviceUI(deviceNameIo);
+                        setExplanation("io-write", "Data Operation", { deviceName: deviceNameIo });
                     }
                 } else if (ioCommand === 1) { // DMA command
                      const dmaDeviceCode = (addressPart >> 4) & 0xF;
                      const dmaDevice = dmaDeviceCode === 2 ? 'disk' : null;
-                     if (dmaDevice) {
+
+                     if (!dmaDevice || !ioOperations[dmaDevice]) {
+                         setExplanation('error-dma-no-disk', 'DMA ERROR');
+                         cpu.isHalted = true;
+                     } else {
                          dma.active = true;
                          dma.sourceDevice = dmaDevice;
                          dma.mar = 0x500; // Hardcoded destination address
                          dma.count = 5; // Hardcoded word count
                          await showBusTransfer('reg-ir', 'dma-controller-panel', 'CMD: DMA START', 'control');
                          setExplanation('dma-init', 'DMA INITIATION', { count: 5, device: dmaDevice, address: toHex(0x500) });
-                     } else {
-                         setExplanation('dma-fail', 'DMA ERROR');
                      }
                 }
                 cycleState = 'START';
@@ -1090,6 +1140,7 @@ elements.resetBtn.addEventListener('click', () => {
 });
 elements.scenarioSelect.addEventListener('change', (e) => {
     currentScenario = e.target.value;
+    updateDeleteButtonVisibility(); // Update visibility on scenario change
     resetSimulation();
 });
 
@@ -1123,6 +1174,398 @@ document.getElementById('opcodes-btn').addEventListener('click', () => {
 document.getElementById('close-modal-btn').addEventListener('click', () => {
     document.getElementById('opcodes-modal').classList.add('hidden');
 });
+
+document.getElementById('builder-close-btn').addEventListener('click', () => {
+    elements.builderModal.classList.add('hidden');
+});
+
+document.getElementById('json-editor-close-btn').addEventListener('click', () => {
+    elements.jsonEditorModal.classList.add('hidden');
+});
+
+
+function createIoDeviceElement(name, priority) {
+    const deviceId = name.toLowerCase().replace(/[^a-z0-9]/g, '-'); // Sanitize name for ID
+    const deviceEl = document.createElement('div');
+    deviceEl.id = deviceId;
+    deviceEl.className = 'i-o-device border-2 border-gray-300 p-3 rounded-lg text-center';
+    deviceEl.innerHTML = `
+        <p class="font-bold">${name} (Priority ${priority})</p>
+        <p id="${deviceId}-status" class="text-sm">${getTranslation('status-idle', currentLang)}</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <div id="${deviceId}-progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+    `;
+    elements.ioDevicesContainer.appendChild(deviceEl);
+    
+    elements.ioDevices[name] = {
+        status: document.getElementById(`${deviceId}-status`),
+        progress: document.getElementById(`${deviceId}-progress`),
+        device: deviceEl,
+    };
+}
+
+document.getElementById('edit-scenario-btn').addEventListener('click', () => {
+    const scenario = scenarios[currentScenario];
+    populateBuilder(scenario);
+    elements.builderModal.classList.remove('hidden');
+});
+
+function populateBuilder(scenario) {
+    // Populate simple fields
+    document.getElementById('builder-scenario-name').value = scenario.name;
+    document.getElementById('builder-pc-start').value = `0x${toHex(scenario.pc_start)}`;
+    document.getElementById('builder-explanation').value = scenario.explanation || '';
+
+    // Populate components checkboxes
+    const hide = scenario.hide || [];
+    document.getElementById('builder-reg-ioar').checked = !hide.includes('reg-ioar');
+    document.getElementById('builder-reg-iobr').checked = !hide.includes('reg-iobr');
+    document.getElementById('builder-reg-flags').checked = !hide.includes('reg-flags');
+    document.getElementById('builder-reg-sp').checked = !hide.includes('reg-sp');
+    document.getElementById('builder-enable-dma').checked = !hide.includes('dma.panel');
+
+    // Enable/disable apply button
+    const applyBtn = document.getElementById('builder-apply-btn');
+    applyBtn.disabled = false;
+    applyBtn.title = 'Applies changes to the current scenario for this session.';
+
+
+    // Populate I/O
+    const ioEnabled = !hide.includes('ioPanel');
+    document.getElementById('builder-enable-io').checked = ioEnabled;
+    document.getElementById('builder-io-options').style.display = ioEnabled ? 'block' : 'none';
+    
+    // Deep copy for editing to avoid modifying original built-in scenarios
+    customScenario = {
+        name: scenario.name,
+        pc_start: scenario.pc_start,
+        memory: JSON.parse(JSON.stringify(scenario.memory || {})),
+        interrupts: scenario.interrupts,
+        hide: [...hide],
+        ioDevices: JSON.parse(JSON.stringify(scenario.ioDevices || DEFAULT_IO_OPERATIONS)),
+        explanation: scenario.explanation || ''
+    };
+
+    initializeBuilder(); // Resets default checkboxes based on default ioOperations
+    
+    // Check devices from the specific scenario against the defaults
+    const scenarioDevices = customScenario.ioDevices;
+    for (const deviceName in DEFAULT_IO_OPERATIONS) {
+       document.getElementById(`builder-device-${deviceName}`).checked = !!scenarioDevices[deviceName];
+    }
+    
+    updateBuilderMemoryList();
+    updateBuilderCustomDeviceList();
+}
+
+
+function initializeBuilder() {
+    // Populate default devices
+    const defaultDevicesContainer = document.getElementById('builder-default-devices-list');
+    defaultDevicesContainer.innerHTML = '';
+    for (const deviceName in DEFAULT_IO_OPERATIONS) {
+        const device = DEFAULT_IO_OPERATIONS[deviceName];
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <input type="checkbox" id="builder-device-${deviceName}" name="builder-device-${deviceName}" checked>
+            <label for="builder-device-${deviceName}">${deviceName} (Priority: ${device.priority}, Duration: ${device.duration})</label>
+        `;
+        defaultDevicesContainer.appendChild(div);
+    }
+}
+
+document.getElementById('edit-scenario-btn').addEventListener('click', () => {
+    const scenario = scenarios[currentScenario];
+    populateBuilder(scenario);
+    elements.builderModal.classList.remove('hidden');
+});
+
+function updateBuilderMemoryList() {
+    const memoryList = document.getElementById('builder-memory-list');
+    memoryList.innerHTML = '';
+    for (const addr in customScenario.memory) {
+        const val = customScenario.memory[addr];
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center p-1 bg-gray-50';
+        div.innerHTML = `<span><span class="font-bold">${toHex(parseInt(addr))}:</span> ${toHex(val)}</span>
+                         <button class="text-red-500 font-bold remove-mem-btn" data-addr="${addr}">X</button>`;
+        memoryList.appendChild(div);
+    }
+    document.querySelectorAll('.remove-mem-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const addrToRemove = e.target.getAttribute('data-addr');
+            delete customScenario.memory[addrToRemove];
+            updateBuilderMemoryList();
+        });
+    });
+}
+
+document.getElementById('builder-add-mem-btn').addEventListener('click', () => {
+    const addrInput = document.getElementById('builder-mem-address');
+    const valInput = document.getElementById('builder-mem-value');
+    const addr = parseInt(addrInput.value);
+    const val = parseInt(valInput.value);
+
+    if (!isNaN(addr) && !isNaN(val)) {
+        customScenario.memory[addr] = val;
+        addrInput.value = '';
+        valInput.value = '';
+        updateBuilderMemoryList();
+    } else {
+        alert('Invalid address or value. Please use hex (0x...) or decimal numbers.');
+    }
+});
+
+function updateBuilderCustomDeviceList() {
+    const deviceList = document.getElementById('builder-custom-devices-list');
+    deviceList.innerHTML = '';
+    for (const deviceName in customScenario.ioDevices) {
+        if (DEFAULT_IO_OPERATIONS[deviceName]) continue; // Don't show default devices here
+        const device = customScenario.ioDevices[deviceName];
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center p-1 bg-gray-50';
+        div.innerHTML = `<span>${deviceName} (P: ${device.priority}, D: ${device.duration})</span>
+                         <button class="text-red-500 font-bold remove-device-btn" data-name="${deviceName}">X</button>`;
+        deviceList.appendChild(div);
+    }
+    document.querySelectorAll('.remove-device-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const nameToRemove = e.target.getAttribute('data-name');
+            delete customScenario.ioDevices[nameToRemove];
+            updateBuilderCustomDeviceList();
+        });
+    });
+}
+
+
+document.getElementById('builder-add-device-btn').addEventListener('click', () => {
+    const nameInput = document.getElementById('builder-device-name');
+    const timingInput = document.getElementById('builder-device-timing');
+    const priorityInput = document.getElementById('builder-device-priority');
+    
+    const name = nameInput.value.trim();
+    const duration = parseInt(timingInput.value);
+    const priority = parseInt(priorityInput.value);
+
+    if (name && !isNaN(duration) && !isNaN(priority)) {
+        customScenario.ioDevices[name] = {
+            active: false, progress: 0, duration, priority, isr: 0, isrState: 'idle'
+        };
+        nameInput.value = '';
+        timingInput.value = '';
+        priorityInput.value = '';
+        updateBuilderCustomDeviceList();
+    } else {
+        alert('Please fill all device fields with valid values.');
+    }
+});
+
+function gatherScenarioDataFromBuilder() {
+    const scenarioData = {};
+    scenarioData.name = document.getElementById('builder-scenario-name').value;
+    scenarioData.pc_start = parseInt(document.getElementById('builder-pc-start').value);
+    scenarioData.explanation = document.getElementById('builder-explanation').value;
+    
+    scenarioData.hide = [];
+    if (!document.getElementById('builder-reg-ioar').checked) scenarioData.hide.push('reg-ioar');
+    if (!document.getElementById('builder-reg-iobr').checked) scenarioData.hide.push('reg-iobr');
+    if (!document.getElementById('builder-reg-flags').checked) scenarioData.hide.push('reg-flags');
+    if (!document.getElementById('builder-reg-sp').checked) scenarioData.hide.push('reg-sp');
+    if (!document.getElementById('builder-enable-dma').checked) scenarioData.hide.push('dma.panel');
+
+    if (!document.getElementById('builder-enable-io').checked) {
+        scenarioData.hide.push('ioPanel');
+        scenarioData.ioDevices = {};
+    } else {
+        const currentDevices = {};
+        // Add selected default devices
+        for (const deviceName in DEFAULT_IO_OPERATIONS) {
+            if (document.getElementById(`builder-device-${deviceName}`).checked) {
+                 currentDevices[deviceName] = { ...DEFAULT_IO_OPERATIONS[deviceName] };
+            }
+        }
+        // Add custom devices that were added in the builder
+        for (const deviceName in customScenario.ioDevices) {
+            if (!DEFAULT_IO_OPERATIONS[deviceName]) { // if it is a truly custom one
+                currentDevices[deviceName] = customScenario.ioDevices[deviceName];
+            }
+        }
+        scenarioData.ioDevices = currentDevices;
+    }
+    
+    scenarioData.memory = { ...customScenario.memory };
+    scenarioData.interrupts = true; // Always true for custom/edited
+
+    return scenarioData;
+}
+
+
+document.getElementById('builder-save-btn').addEventListener('click', () => {
+    const newScenarioData = gatherScenarioDataFromBuilder();
+    
+    const scenarioId = `custom-${Date.now()}`;
+    scenarios[scenarioId] = newScenarioData;
+    
+    const option = document.createElement('option');
+    option.value = scenarioId;
+    option.textContent = newScenarioData.name;
+    elements.scenarioSelect.appendChild(option);
+
+    elements.scenarioSelect.value = scenarioId;
+    currentScenario = scenarioId;
+    updateDeleteButtonVisibility(); 
+    resetSimulation();
+    
+    if(newScenarioData.explanation) {
+        elements.explanationText.textContent = newScenarioData.explanation;
+        elements.cycleStateText.textContent = '';
+    }
+
+    elements.builderModal.classList.add('hidden');
+});
+
+document.getElementById('builder-apply-btn').addEventListener('click', () => {
+    const updatedScenarioData = gatherScenarioDataFromBuilder();
+    scenarios[currentScenario] = updatedScenarioData;
+
+    // Update dropdown text if name changed
+    const option = elements.scenarioSelect.querySelector(`option[value="${currentScenario}"]`);
+    if (option) {
+        option.textContent = updatedScenarioData.name;
+    }
+
+    resetSimulation();
+
+    if(updatedScenarioData.explanation) {
+        elements.explanationText.textContent = updatedScenarioData.explanation;
+        elements.cycleStateText.textContent = '';
+    }
+    
+    elements.builderModal.classList.add('hidden');
+});
+
+
+document.getElementById('builder-export-btn').addEventListener('click', () => {
+    const dataToExport = gatherScenarioDataFromBuilder();
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `${dataToExport.name.replace(/\s/g, '_')}.json`;
+    
+    let linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+});
+
+document.getElementById('builder-import-btn').addEventListener('click', () => {
+    document.getElementById('builder-import-file').click();
+});
+
+document.getElementById('builder-import-file').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                repopulateBuilder(importedData);
+            } catch (error) {
+                alert('Error parsing JSON file: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+    // Clear the file input so the change event fires again for the same file
+    event.target.value = '';
+});
+
+document.getElementById('builder-enable-io').addEventListener('change', (e) => {
+    document.getElementById('builder-io-options').style.display = e.target.checked ? 'block' : 'none';
+});
+
+function repopulateBuilder(scenarioData) {
+    customScenario = scenarioData;
+    // Repopulate UI
+    document.getElementById('builder-scenario-name').value = customScenario.name;
+    document.getElementById('builder-pc-start').value = toHex(customScenario.pc_start);
+    document.getElementById('builder-explanation').value = customScenario.explanation;
+    
+    document.getElementById('builder-reg-ioar').checked = !customScenario.hide.includes('reg-ioar');
+    document.getElementById('builder-reg-iobr').checked = !customScenario.hide.includes('reg-iobr');
+    document.getElementById('builder-reg-flags').checked = !customScenario.hide.includes('reg-flags');
+    document.getElementById('builder-reg-sp').checked = !customScenario.hide.includes('reg-sp');
+    
+    const ioEnabled = !customScenario.hide.includes('ioPanel');
+    document.getElementById('builder-enable-io').checked = ioEnabled;
+
+    initializeBuilder(); // Resets default checkboxes
+    for (const deviceName in DEFAULT_IO_OPERATIONS) {
+        if (customScenario.ioDevices[deviceName]) {
+            document.getElementById(`builder-device-${deviceName}`).checked = true;
+        } else {
+            document.getElementById(`builder-device-${deviceName}`).checked = false;
+        }
+    }
+
+    updateBuilderMemoryList();
+    updateBuilderCustomDeviceList();
+}
+
+
+document.getElementById('builder-edit-json-btn').addEventListener('click', () => {
+    const scenarioData = gatherScenarioDataFromBuilder();
+    document.getElementById('json-editor-textarea').value = JSON.stringify(scenarioData, null, 2);
+    elements.jsonEditorModal.classList.remove('hidden');
+});
+
+document.getElementById('json-editor-apply-btn').addEventListener('click', () => {
+    try {
+        const jsonData = document.getElementById('json-editor-textarea').value;
+        const scenarioData = JSON.parse(jsonData);
+        repopulateBuilder(scenarioData);
+        elements.jsonEditorModal.classList.add('hidden');
+    } catch (error) {
+        alert('Invalid JSON: ' + error.message);
+    }
+});
+
+
+function updateDeleteButtonVisibility() {
+    const deleteBtn = document.getElementById('delete-scenario-btn');
+    if (currentScenario.startsWith('custom-')) {
+        deleteBtn.classList.remove('hidden');
+    } else {
+        deleteBtn.classList.add('hidden');
+    }
+}
+
+elements.scenarioSelect.addEventListener('change', (e) => {
+    currentScenario = e.target.value;
+    updateDeleteButtonVisibility();
+    resetSimulation();
+});
+
+document.getElementById('delete-scenario-btn').addEventListener('click', () => {
+    if (currentScenario.startsWith('custom-') && confirm(`Are you sure you want to delete "${scenarios[currentScenario].name}"?`)) {
+        // Remove from select dropdown
+        const option = elements.scenarioSelect.querySelector(`option[value="${currentScenario}"]`);
+        if (option) {
+            option.remove();
+        }
+        
+        // Remove from scenarios object
+        delete scenarios[currentScenario];
+        
+        // Switch to a default scenario
+        currentScenario = 'vonNeumann';
+        elements.scenarioSelect.value = currentScenario;
+        updateDeleteButtonVisibility();
+        resetSimulation();
+    }
+});
+
 
 // Initial Load
 window.onload = () => {

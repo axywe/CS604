@@ -104,21 +104,27 @@ include 'header.php';
                 <div class="mt-6">
                     <h3 class="text-xl font-semibold mb-3 text-center border-b pb-2"><?php echo getTranslation('control', $currentLang); ?></h3>
                     <div class="flex flex-col gap-3">
-                        <select id="scenario-select" class="w-full p-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="vonNeumann"><?php echo getTranslation('scenario-0', $currentLang); ?></option>
-                            <option value="program1"><?php echo getTranslation('scenario-1', $currentLang); ?></option>
-                            <option value="program2"><?php echo getTranslation('scenario-2', $currentLang); ?></option>
-                            <option value="program3"><?php echo getTranslation('scenario-3', $currentLang); ?></option>
-                            <option value="program4"><?php echo getTranslation('scenario-4', $currentLang); ?></option>
-                            <option value="dma"><?php echo getTranslation('scenario-5', $currentLang); ?></option>
-                            <option value="ioRegisters"><?php echo getTranslation('scenario-6', $currentLang); ?></option>
-                            <option value="conditionalJumps"><?php echo getTranslation('scenario-7', $currentLang); ?></option>
-                            <option value="flagsAndJumps"><?php echo getTranslation('scenario-8', $currentLang); ?></option>
-                        </select>
+                        <div class="flex gap-2">
+                            <select id="scenario-select" class="w-full p-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="vonNeumann"><?php echo getTranslation('scenario-0', $currentLang); ?></option>
+                                <option value="program1"><?php echo getTranslation('scenario-1', $currentLang); ?></option>
+                                <option value="program2"><?php echo getTranslation('scenario-2', $currentLang); ?></option>
+                                <option value="program3"><?php echo getTranslation('scenario-3', $currentLang); ?></option>
+                                <option value="program4"><?php echo getTranslation('scenario-4', $currentLang); ?></option>
+                                <option value="dma"><?php echo getTranslation('scenario-5', $currentLang); ?></option>
+                                <option value="ioRegisters"><?php echo getTranslation('scenario-6', $currentLang); ?></option>
+                                <option value="conditionalJumps"><?php echo getTranslation('scenario-7', $currentLang); ?></option>
+                                <option value="flagsAndJumps"><?php echo getTranslation('scenario-8', $currentLang); ?></option>
+                            </select>
+                            <button id="delete-scenario-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-lg hidden" title="<?php echo getTranslation('delete-scenario', $currentLang); ?>">🗑️</button>
+                        </div>
                         <button id="step-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
                             <?php echo getTranslation('next-step', $currentLang); ?>
                         </button>
                         <button id="reset-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('reset-simulation', $currentLang); ?></button>
+                        <button id="edit-scenario-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg">
+                            <?php echo getTranslation('edit-scenario', $currentLang); ?>
+                        </button>
                         <button id="opcodes-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg mt-2"><?php echo getTranslation('instruction-list', $currentLang); ?></button>
                     </div>
                 </div>
@@ -128,28 +134,8 @@ include 'header.php';
             <div id="middle-panel" class="lg:w-1/3 w-full flex flex-col gap-6">
                 <div id="io-device-panel" class="bg-white p-6 rounded-xl shadow-lg">
                     <h3 class="text-xl font-semibold mb-3 text-center border-b pb-2"><?php echo getTranslation('io-devices', $currentLang); ?></h3>
-                    <div class="space-y-3">
-                        <div id="printer" class="i-o-device border-2 border-gray-300 p-3 rounded-lg text-center">
-                            <p class="font-bold"><?php echo getTranslation('printer', $currentLang); ?> (<?php echo getTranslation('priority-2', $currentLang); ?>)</p>
-                            <p id="printer-status" class="text-sm"><?php echo getTranslation('status-idle', $currentLang); ?></p>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                <div id="printer-progress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div id="disk" class="i-o-device border-2 border-gray-300 p-3 rounded-lg text-center">
-                            <p class="font-bold"><?php echo getTranslation('disk', $currentLang); ?> (<?php echo getTranslation('priority-4', $currentLang); ?>)</p>
-                            <p id="disk-status" class="text-sm"><?php echo getTranslation('status-idle', $currentLang); ?></p>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                <div id="disk-progress" class="bg-orange-500 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div id="network" class="i-o-device border-2 border-gray-300 p-3 rounded-lg text-center">
-                            <p class="font-bold"><?php echo getTranslation('network', $currentLang); ?> (<?php echo getTranslation('priority-5', $currentLang); ?>)</p>
-                            <p id="network-status" class="text-sm"><?php echo getTranslation('status-idle', $currentLang); ?></p>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                <div id="network-progress" class="bg-red-500 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                        </div>
+                    <div id="io-devices-container" class="space-y-3">
+                        <!-- I/O Devices will be generated here by JavaScript -->
                     </div>
                 </div>
 
@@ -210,6 +196,126 @@ include 'header.php';
                 </table>
             </div>
             <button id="close-modal-btn" class="mt-6 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('close', $currentLang); ?></button>
+        </div>
+    </div>
+
+    <!-- Modal for scenario builder -->
+    <div id="builder-modal" class="modal-overlay hidden">
+        <div class="modal-content max-h-screen overflow-y-auto w-full max-w-4xl">
+            <h2 class="text-2xl font-bold mb-4 text-center"><?php echo getTranslation('scenario-builder', $currentLang); ?></h2>
+            
+            <div class="mb-4">
+                <label for="builder-scenario-name" class="block text-sm font-medium text-gray-700"><?php echo getTranslation('scenario-name', $currentLang); ?></label>
+                <input type="text" id="builder-scenario-name" class="mt-1 p-2 w-full border rounded" value="My Custom Scenario">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left side: Components and I/O -->
+                <div>
+                    <!-- Components -->
+                    <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                        <h3 class="text-lg font-semibold mb-2 border-b pb-2"><?php echo getTranslation('components', $currentLang); ?></h3>
+                        <div class="mb-2">
+                            <label for="builder-pc-start" class="block text-sm font-medium text-gray-700"><?php echo getTranslation('pc-start', $currentLang); ?></label>
+                            <input type="text" id="builder-pc-start" name="builder-pc-start" class="mt-1 p-2 w-full border rounded" value="0x100">
+                        </div>
+                        <p class="text-sm mb-2 text-gray-600">PC, IR, MAR, MBR, AC are always included.</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <input type="checkbox" id="builder-reg-ioar" name="builder-reg-ioar" checked>
+                                <label for="builder-reg-ioar">I/O AR</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="builder-reg-iobr" name="builder-reg-iobr" checked>
+                                <label for="builder-reg-iobr">I/O BR</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="builder-reg-flags" name="builder-reg-flags" checked>
+                                <label for="builder-reg-flags">Status Flags</label>
+                            </div>
+                             <div>
+                                <input type="checkbox" id="builder-reg-sp" name="builder-reg-sp" checked>
+                                <label for="builder-reg-sp">Stack Pointer (SP)</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="builder-enable-dma" name="builder-enable-dma">
+                                <label for="builder-enable-dma"><?php echo getTranslation('enable-dma', $currentLang); ?></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- I/O Devices -->
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2 border-b pb-2"><?php echo getTranslation('io-devices', $currentLang); ?></h3>
+                        <div>
+                            <input type="checkbox" id="builder-enable-io" name="builder-enable-io" checked>
+                            <label for="builder-enable-io"><?php echo getTranslation('enable-io-devices', $currentLang); ?></label>
+                        </div>
+                        <div id="builder-io-options" class="mt-2 space-y-4">
+                            <h4 class="font-semibold mt-4"><?php echo getTranslation('default-devices', $currentLang); ?></h4>
+                            <div id="builder-default-devices-list">
+                                <!-- Default devices will be populated here -->
+                            </div>
+                            <h4 class="font-semibold mt-4"><?php echo getTranslation('custom-device', $currentLang); ?></h4>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                                <input type="text" id="builder-device-name" placeholder="<?php echo getTranslation('device-name', $currentLang); ?>" class="p-2 border rounded col-span-2">
+                                <input type="number" id="builder-device-timing" placeholder="<?php echo getTranslation('timing-duration', $currentLang); ?>" class="p-2 border rounded">
+                                <input type="number" id="builder-device-priority" placeholder="<?php echo getTranslation('priority', $currentLang); ?>" class="p-2 border rounded">
+                            </div>
+                            <button id="builder-add-device-btn" class="w-full bg-blue-500 text-white p-2 mt-2 rounded"><?php echo getTranslation('add-device', $currentLang); ?></button>
+                            <div id="builder-custom-devices-list" class="mt-2 space-y-1">
+                                <!-- Custom devices will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right side: Memory and Explanation -->
+                <div>
+                    <!-- Memory Editor -->
+                    <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                        <h3 class="text-lg font-semibold mb-2 border-b pb-2"><?php echo getTranslation('memory-editor', $currentLang); ?></h3>
+                        <div class="grid grid-cols-1 md:grid-cols-[1fr,1fr,auto] gap-2 mb-2">
+                             <input type="text" id="builder-mem-address" placeholder="<?php echo getTranslation('address', $currentLang); ?> (e.g., 0x100)" class="p-2 border rounded min-w-0">
+                             <input type="text" id="builder-mem-value" placeholder="<?php echo getTranslation('value', $currentLang); ?> (e.g., 0x1104)" class="p-2 border rounded min-w-0">
+                             <button id="builder-add-mem-btn" class="bg-blue-500 text-white p-2 rounded"><?php echo getTranslation('add-memory-entry', $currentLang); ?></button>
+                        </div>
+                        <div id="builder-memory-list" class="max-h-48 overflow-y-auto border rounded bg-white p-2">
+                            <!-- Memory entries will be listed here -->
+                        </div>
+                    </div>
+
+                    <!-- Explanation -->
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2 border-b pb-2"><?php echo getTranslation('explanation-editor', $currentLang); ?></h3>
+                        <textarea id="builder-explanation" class="w-full h-32 p-2 border rounded" placeholder="Enter scenario explanation here..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-6 flex flex-col md:flex-row gap-4">
+                <button id="builder-import-btn" class="w-full md:w-auto bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('import-json', $currentLang); ?></button>
+                <input type="file" id="builder-import-file" class="hidden" accept=".json">
+                <button id="builder-export-btn" class="w-full md:w-auto bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('export-json', $currentLang); ?></button>
+                <button id="builder-edit-json-btn" class="w-full md:w-auto bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('edit-as-json', $currentLang); ?></button>
+                <div class="flex-grow"></div> <!-- Spacer -->
+                <button id="builder-apply-btn" class="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('apply-changes', $currentLang); ?></button>
+                <button id="builder-save-btn" class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('save-scenario', $currentLang); ?></button>
+                <button id="builder-close-btn" class="w-full md:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('close', $currentLang); ?></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for JSON text editor -->
+    <div id="json-editor-modal" class="modal-overlay hidden">
+        <div class="modal-content max-h-screen overflow-y-auto w-full max-w-2xl flex flex-col">
+            <h2 class="text-2xl font-bold mb-4 text-center"><?php echo getTranslation('json-text-editor', $currentLang); ?></h2>
+            <textarea id="json-editor-textarea" class="w-full flex-grow font-mono text-sm p-2 border rounded bg-gray-800 text-white" style="min-height: 400px;"></textarea>
+            <div class="mt-4 flex justify-end gap-4">
+                 <button id="json-editor-apply-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('apply-json', $currentLang); ?></button>
+                 <button id="json-editor-close-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"><?php echo getTranslation('close', $currentLang); ?></button>
+            </div>
         </div>
     </div>
 
