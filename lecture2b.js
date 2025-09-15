@@ -183,7 +183,7 @@ function drawBusArbitrationScenario() {
     `;
     drawComponent('cpu', 'CPU', '20%', '10%');
     drawComponent('memory', 'Memory', '20%', '70%');
-    drawComponent('dma-controller', 'DMA Controller', '60%', '10%');
+    drawComponent('dma-controller', 'DMA Controller', '60%', '20%');
     drawComponent('io-device', 'I/O Device', '60%', '70%');
     
     // Add arbitration logic display
