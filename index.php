@@ -26,6 +26,9 @@ include 'header.php';
             <a href="lecture2b.php" class="block w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-4 rounded-lg text-xl transition-transform transform hover:scale-105">
                 <?php echo getTranslation('lecture2b-title', $currentLang); ?>
             </a>
+            <a href="lecture3.php" class="block w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-4 rounded-lg text-xl transition-transform transform hover:scale-105">
+                <?php echo getTranslation('lecture3-title', $currentLang); ?>
+            </a>
         </div>
     </div>
 </div>

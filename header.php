@@ -138,6 +138,7 @@
                     <a href="index.php" class="text-gray-700 hover:text-blue-800 font-semibold"><?php echo getTranslation('home', $currentLang); ?></a>
                     <a href="lecture2a.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('lecture2a-title', $currentLang); ?></a>
                     <a href="lecture2b.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('lecture2b-title', $currentLang); ?></a>
+                    <a href="lecture3.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('lecture3-title', $currentLang); ?></a>
                 </div>
                 <div class="flex items-center space-x-2">
                     <button id="lang-en" class="lang-btn bg-blue-500 text-white font-bold py-2 px-4 rounded-l">EN</button>
