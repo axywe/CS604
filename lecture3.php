@@ -1,17 +1,5 @@
 <?php
-require_once 'translations.php';
-
-// Get current language
-$currentLang = $_GET['lang'] ?? $_SESSION['lang'] ?? 'en';
-if (!isset($translations[$currentLang])) {
-    $currentLang = 'en';
-}
-
-// Save language in session
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-$_SESSION['lang'] = $currentLang;
+require_once __DIR__ . '/includes/bootstrap.php';
 
 include 'header.php';
 ?>

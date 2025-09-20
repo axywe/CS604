@@ -1,17 +1,5 @@
 <?php
-require_once 'translations.php';
-
-// Get current language
-$currentLang = $_GET['lang'] ?? $_SESSION['lang'] ?? 'en';
-if (!isset($translations[$currentLang])) {
-    $currentLang = 'en';
-}
-
-// Save language in session
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-$_SESSION['lang'] = $currentLang;
+require_once __DIR__ . '/includes/bootstrap.php';
 
 include 'header.php';
 ?>
@@ -32,26 +20,6 @@ include 'header.php';
         </div>
     </div>
 </div>
-
-<script>
-// Обработчики для кнопок переключения языка
-document.getElementById('lang-en').addEventListener('click', function() {
-    window.location.href = 'index.php?lang=en';
-});
-
-document.getElementById('lang-ru').addEventListener('click', function() {
-    window.location.href = 'index.php?lang=ru';
-});
-
-// Выделить активную кнопку языка
-const currentLang = '<?php echo $currentLang; ?>';
-document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.classList.remove('bg-blue-500', 'text-white');
-    btn.classList.add('bg-gray-300', 'text-gray-700');
-});
-document.getElementById(`lang-${currentLang}`).classList.add('bg-blue-500', 'text-white');
-document.getElementById(`lang-${currentLang}`).classList.remove('bg-gray-300', 'text-gray-700');
-</script>
 
 </body>
 </html>

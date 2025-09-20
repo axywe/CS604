@@ -59,16 +59,9 @@ function getTranslation(key, lang = 'en', params = {}) {
            key;
 }
 
-function setLanguage(lang) {
+function applyLanguage(lang) {
     currentLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-500', 'text-white');
-        btn.classList.add('bg-gray-300', 'text-gray-700');
-    });
-    document.getElementById(`lang-${lang}`).classList.add('bg-blue-500', 'text-white');
-    document.getElementById(`lang-${lang}`).classList.remove('bg-gray-300', 'text-gray-700');
-    
-    // Update scenario options
+
     document.querySelector('#scenario-select option[value="bus"]').textContent = getTranslation('scenario-bus', currentLang);
     document.querySelector('#scenario-select option[value="bus-arbitration"]').textContent = getTranslation('scenario-bus-arbitration', currentLang);
     document.querySelector('#scenario-select option[value="point-to-point"]').textContent = getTranslation('scenario-point-to-point', currentLang);
@@ -78,8 +71,7 @@ function setLanguage(lang) {
     document.querySelector('#scenario-select option[value="pcie-encoding"]').textContent = getTranslation('scenario-pcie-encoding', currentLang);
     document.querySelector('#scenario-select option[value="pcie-multilane"]').textContent = getTranslation('scenario-pcie-multilane', currentLang);
     document.querySelector('#scenario-select option[value="pcie-ack-nak"]').textContent = getTranslation('scenario-pcie-ack-nak', currentLang);
-    
-    localStorage.setItem('cs604-lang', lang);
+
     resetSimulation();
 }
 
@@ -1121,15 +1113,12 @@ async function runPcieAckNakScenarioStep(step) {
 elements.stepBtn.addEventListener('click', simulationStep);
 elements.resetBtn.addEventListener('click', resetSimulation);
 elements.scenarioSelect.addEventListener('change', resetSimulation);
-document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
-document.getElementById('lang-ru').addEventListener('click', () => setLanguage('ru'));
 
 // Initial Load
-window.onload = () => {
-    const savedLang = localStorage.getItem('cs604-lang');
-    if (savedLang) {
-        setLanguage(savedLang);
-    } else {
-        setLanguage(currentLang); // From PHP
-    }
-};
+window.addEventListener('load', () => {
+    const activeLanguage = window.LanguageManager
+        ? LanguageManager.getCurrentLanguage()
+        : currentLang;
+
+    applyLanguage(activeLanguage);
+});

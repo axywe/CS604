@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CPU Instruction Cycle Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/language.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -141,8 +142,17 @@
                     <a href="lecture3.php" class="text-blue-600 hover:text-blue-800 font-semibold"><?php echo getTranslation('lecture3-title', $currentLang); ?></a>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button id="lang-en" class="lang-btn bg-blue-500 text-white font-bold py-2 px-4 rounded-l">EN</button>
-                    <button id="lang-ru" class="lang-btn bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-r">RU</button>
+                    <?php $isEnglish = ($currentLang ?? 'en') === 'en'; ?>
+                    <button
+                        id="lang-en"
+                        data-lang="en"
+                        class="lang-btn <?php echo $isEnglish ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700'; ?> font-bold py-2 px-4 rounded-l"
+                    >EN</button>
+                    <button
+                        id="lang-ru"
+                        data-lang="ru"
+                        class="lang-btn <?php echo $isEnglish ? 'bg-gray-300 text-gray-700' : 'bg-blue-500 text-white'; ?> font-bold py-2 px-4 rounded-r"
+                    >RU</button>
                 </div>
             </div>
         </nav>

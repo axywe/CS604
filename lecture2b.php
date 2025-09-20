@@ -1,20 +1,6 @@
 <?php
-// Подключаем файл с переводами
-require_once 'translations.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 
-// Получаем текущий язык
-$currentLang = $_GET['lang'] ?? $_SESSION['lang'] ?? 'en';
-if (!isset($translations[$currentLang])) {
-    $currentLang = 'en';
-}
-
-// Сохраняем язык в сессии
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-$_SESSION['lang'] = $currentLang;
-
-// Подключаем заголовок
 include 'header.php';
 ?>
 

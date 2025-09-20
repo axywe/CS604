@@ -210,6 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepIndicatorEl = document.getElementById('step-indicator');
     const timelineList = document.getElementById('timeline-list');
 
+    if (window.LanguageManager) {
+        currentLang = LanguageManager.getCurrentLanguage();
+    }
+
     const componentElements = {};
     const statusElements = {};
 
@@ -218,34 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
         componentElements[id] = card;
         statusElements[id] = card.querySelector('[data-component-status]');
     });
-
-    function highlightLanguageButtons() {
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            btn.classList.remove('bg-blue-500', 'text-white');
-            btn.classList.add('bg-gray-300', 'text-gray-700');
-        });
-        const active = document.getElementById(`lang-${currentLang}`);
-        if (active) {
-            active.classList.add('bg-blue-500', 'text-white');
-            active.classList.remove('bg-gray-300', 'text-gray-700');
-        }
-    }
-
-    function attachLanguageHandlers() {
-        const enBtn = document.getElementById('lang-en');
-        const ruBtn = document.getElementById('lang-ru');
-
-        if (enBtn) {
-            enBtn.addEventListener('click', () => {
-                window.location.href = 'lecture3.php?lang=en';
-            });
-        }
-        if (ruBtn) {
-            ruBtn.addEventListener('click', () => {
-                window.location.href = 'lecture3.php?lang=ru';
-            });
-        }
-    }
 
     function resetStatuses() {
         Object.values(statusElements).forEach(statusEl => {
@@ -397,9 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentScenarioId = scenarioSelect.value;
     let currentStepIndex = 0;
-
-    highlightLanguageButtons();
-    attachLanguageHandlers();
 
     scenarioSelect.addEventListener('change', handleScenarioChange);
     stepBtn.addEventListener('click', handleNextStep);

@@ -306,20 +306,11 @@ async function showBusTransfer(startId, endId, text, type) {
     elements.busContainer.removeChild(bus);
 }
 
-function setLanguage(lang) {
+function applyLanguage(lang) {
     currentLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.remove('bg-blue-500', 'text-white');
-        btn.classList.add('bg-gray-300', 'text-gray-700');
-    });
-    document.getElementById(`lang-${lang}`).classList.add('bg-blue-500', 'text-white');
-    document.getElementById(`lang-${lang}`).classList.remove('bg-gray-300', 'text-gray-700');
-    
-    // Обновляем опции сценариев
+
     updateScenarioOptions();
-    
-    localStorage.setItem('cs604-lang', lang);
-    resetSimulation(); // Reload simulation to apply new explanation language
+    resetSimulation();
 }
 
 function updateScenarioOptions() {
@@ -1188,8 +1179,6 @@ elements.scenarioSelect.addEventListener('change', (e) => {
     resetSimulation();
 });
 
-document.getElementById('lang-en').addEventListener('click', () => setLanguage('en'));
-document.getElementById('lang-ru').addEventListener('click', () => setLanguage('ru'));
 
 document.getElementById('opcodes-btn').addEventListener('click', () => {
     const modal = document.getElementById('opcodes-modal');
@@ -1612,14 +1601,10 @@ document.getElementById('delete-scenario-btn').addEventListener('click', () => {
 
 
 // Initial Load
-window.onload = () => {
-    // currentLang уже установлен из PHP, но проверим localStorage
-    const savedLang = localStorage.getItem('cs604-lang');
-    if (savedLang && savedLang !== currentLang) {
-        setLanguage(savedLang);
-    } else {
-        // Инициализация с текущим языком из PHP
-        updateScenarioOptions(); // Обновляем переводы сценариев
-        setLanguage(currentLang);
-    }
-};
+window.addEventListener('load', () => {
+    const activeLanguage = window.LanguageManager
+        ? LanguageManager.getCurrentLanguage()
+        : currentLang;
+
+    applyLanguage(activeLanguage);
+});

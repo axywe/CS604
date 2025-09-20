@@ -742,29 +742,3 @@ $opcodeMap = [
     ]
 ];
 
-// Функция для получения перевода
-function getTranslation($key, $lang = 'en', $params = []) {
-    global $translations;
-    
-    $text = $translations[$lang][$key] ?? $translations['en'][$key] ?? $key;
-    
-    // Заменяем параметры в тексте
-    foreach ($params as $param => $value) {
-        $text = str_replace('{' . $param . '}', $value, $text);
-    }
-    
-    return $text;
-}
-
-// Получение текущего языка из параметров или сессии
-$currentLang = $_GET['lang'] ?? $_SESSION['lang'] ?? 'en';
-if (!isset($translations[$currentLang])) {
-    $currentLang = 'en';
-}
-
-// Сохранение языка в сессии
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-$_SESSION['lang'] = $currentLang;
-?>
